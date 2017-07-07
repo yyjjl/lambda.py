@@ -1,0 +1,15 @@
+#+TITLE: New lambda style in Python
+
+
+* Boost style
+  #+BEGIN_SRC python
+  from fn import _1, _2, L
+
+  map(L(_1 + _2), [1, 2, 3], [3, 4, 5])
+  # call method
+  map(L(_1.strip()), ['a ', ' b', ' c '])
+  # subscript
+  map(L(_1[_2]), ['a', 'ab', 'abc'], [0, 1, 2])
+
+  #+END_SRC
+
