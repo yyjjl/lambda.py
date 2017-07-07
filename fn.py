@@ -33,7 +33,16 @@ def dispatch3(op, v1, v2, v3):
     return Lambda(lambda *vs: op(f1(*vs), v2, v3))
 
 
+def hasLambda(iterable):
+    for v in iterable:
+        if isinstance(v, Lambda):
+            return True
+    return False
+
+
 class Lambda:
+    __slots__ = ('lam')
+
     def __init__(self, lam=None):
         self.lam = lam
 
@@ -100,7 +109,7 @@ class Lambda:
     def __divmod__(self, v):
         return dispatch2(divmod, self, v)
 
-    def __pow__(self, v1, v2):
+    def __pow__(self, v1, v2=None):
         return dispatch3(pow, self, v1, v2)
 
     def __lshift__(self, v):
@@ -176,36 +185,62 @@ class Lambda:
         return dispatch2(operator.contains, self, v)
 
 
-_1 = Lambda(lambda *x: x[0])
-_2 = Lambda(lambda *x: x[1])
-_3 = Lambda(lambda *x: x[2])
-_4 = Lambda(lambda *x: x[3])
-_5 = Lambda(lambda *x: x[4])
-_6 = Lambda(lambda *x: x[5])
-_7 = Lambda(lambda *x: x[6])
-_8 = Lambda(lambda *x: x[7])
-_9 = Lambda(lambda *x: x[8])
+def placeHolder(i):
+    return Lambda(lambda *x: x[i])
+
+_1 = placeHolder(0)
+_2 = placeHolder(1)
+_3 = placeHolder(2)
+_4 = placeHolder(3)
+_5 = placeHolder(4)
+_6 = placeHolder(5)
+_7 = placeHolder(6)
+_8 = placeHolder(7)
+_9 = placeHolder(8)
 
 
 def L(lam):
-    return lambda *vs: lam.lam(*vs)
+    return wrap(lambda *vs: lam.lam(*vs))
 
 
-def andmap(f, vs):
-    if len(vs) == 0:
-        return True
-    return f(vs[0]) and andmap(f, vs[1:])
+def Iter(iterable):
+    def inner(*vs):
+        for v in iterable:
+            if isinstance(v, Lambda):
+                yield v.lam(*vs)
+            elif isinstance(v, tuple):
+                yield Tuple(v).lam(*vs)
+            elif isinstance(v, list):
+                yield List(v).lam(*vs)
+            elif isinstance(v, dict):
+                yield Dict(v).lam(*vs)
+            else:
+                yield v
+    return Lambda(inner)
 
 
-def ormap(f, vs):
-    if len(vs) == 0:
-        return False
-    return f(vs[0]) or ormap(f, vs[1:])
+def Dict(iterable):
+    if isinstance(iterable, dict):
+        iterable = iterable.items()
+
+    def inner(*vs):
+        return dict(Iter(iterable).lam(*vs))
+    return Lambda(inner)
+
+
+def List(iterable):
+    def inner(*vs):
+        return list(Iter(iterable).lam(*vs))
+    return Lambda(inner)
+
+
+def Tuple(iterable):
+    def inner(*vs):
+        return tuple(Iter(iterable).lam(*vs))
+    return Lambda(inner)
 
 
 def wrap(f):
-    def hasLambda(vs):
-        return ormap(lambda x: isinstance(x, Lambda), vs)
 
     @functools.wraps(f)
     def wrapped(*vs, **ks):
