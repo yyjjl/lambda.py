@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import operator
+import functools
 
 
 def dispatch1(op, v):
@@ -188,3 +189,36 @@ _9 = Lambda(lambda *x: x[8])
 
 def L(lam):
     return lambda *vs: lam.lam(*vs)
+
+
+def andmap(f, vs):
+    if len(vs) == 0:
+        return True
+    return f(vs[0]) and andmap(f, vs[1:])
+
+
+def ormap(f, vs):
+    if len(vs) == 0:
+        return False
+    return f(vs[0]) or ormap(f, vs[1:])
+
+
+def wrap(f):
+    def hasLambda(vs):
+        return ormap(lambda x: isinstance(x, Lambda), vs)
+
+    @functools.wraps(f)
+    def wrapped(*vs, **ks):
+        if hasLambda(vs) or hasLambda(ks):
+            def inner(*vs_):
+                def call(ls):
+                    for v in ls:
+                        if isinstance(v, Lambda):
+                            v = v.lam(*vs_)
+                        yield v
+                vs2 = list(call(vs))
+                ks2 = dict(zip(ks.keys(), call(ks.values())))
+                return f(*vs2, **ks2)
+            return Lambda(inner)
+        return f(*vs, **ks)
+    return wrapped

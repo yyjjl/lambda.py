@@ -3,13 +3,19 @@
 
 * Boost style
   #+BEGIN_SRC python
-  from fn import _1, _2, L
+  from fn import _1, _2, L, wrap
 
   map(L(_1 + _2), [1, 2, 3], [3, 4, 5])
   # call method
   map(L(_1.strip()), ['a ', ' b', ' c '])
   # subscript
   map(L(_1[_2]), ['a', 'ab', 'abc'], [0, 1, 2])
+
+  map = wrap(map)
+  double = L(_1 * 2)
+  func = L(map(L(_1 * _2), _1, [1, 4, 3]))
+
+  list(func([4, 5, 6]))  # => [4, 20, 18]
 
   #+END_SRC
 
