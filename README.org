@@ -37,6 +37,12 @@
   func = L(Dict({'a': _1, 'b': (_2, _1, 'c'), 'd': [_1, _2]}))
   func(11, 12, 13)  # => {'a': 11, 'b': (12, 11, 'c'), 'd': [11, 12]}
 
+  # _1 while be exposed to upper Lambda, and _2 shift as _1
+  # L[1](_1 * _2) is a function generator
+  func = L(map(L[1](_1 * _2), [1, 2, 3]))
+  func(0)  # => [0, 0, 0]
+  func(2)  # => [2, 4, 6]
+
   #+END_SRC
 
   TODO: add closure

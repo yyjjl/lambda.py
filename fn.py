@@ -199,8 +199,49 @@ _8 = placeHolder(7)
 _9 = placeHolder(8)
 
 
-def L(lam):
-    return wrap(lambda *vs: lam.lam(*vs))
+class Closure:
+    def __call__(self, lam):
+        return wrap(lambda *vs: lam.lam(*vs))
+
+    def __getitem__(self, key):
+        if not isinstance(key, tuple):
+            key = (key,)
+        return closure(key)
+
+
+def closure(indices):
+    indices = sorted(indices)
+    length = len(indices)
+
+    def inner1(lam):
+        def inner2(*vs):
+            def inner3(*vs_):
+                vs__ = [None] * (len(vs_) + length)
+                for idx, i in enumerate(indices):
+                    vs__[i - 1] = vs[idx]
+                idx = 0
+                idx_ = 0
+                idx__ = 0
+                end = indices[0] - 1
+                while True:
+                    while idx__ < end:
+                        vs__[idx__] = vs_[idx_]
+                        idx__ += 1
+                        idx_ += 1
+                    idx__ = end + 1
+                    idx += 1
+                    if idx < length:
+                        end = indices[idx] - 1
+                    elif idx == length:
+                        end = len(vs__)
+                    else:
+                        break
+                return lam.lam(*vs__)
+            return inner3
+        return Lambda(inner2)
+    return inner1
+
+L = Closure()
 
 
 def Iter(iterable):
